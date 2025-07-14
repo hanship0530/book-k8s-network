@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-IP=$(ip -br -4 addr | grep enp0s8 | awk '{print $3}')
+IP=$(ip -br -4 addr | grep eth0 | awk '{print $3}')
 
 cat <<EOT> /etc/netplan/50-vagrant.yaml
 network:
   version: 2
   renderer: networkd
   ethernets:
-    enp0s8:
+    eth0:
       addresses:
       - $IP
       routes:
@@ -15,5 +15,6 @@ network:
         via: 192.168.10.254
 EOT
 
-sudo chmod 400 /etc/netplan/50-vagrant.yaml
-sudo netplan apply
+chmod 400 /etc/netplan/01-netcfg.yaml
+chmod 400 /etc/netplan/50-vagrant.yaml
+netplan apply

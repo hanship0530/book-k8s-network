@@ -12,7 +12,7 @@ chown $(id -u):$(id -g) $HOME/.kube/config
 
 echo "[TASK 3] Install Calico CNI - v$2"
 #kubectl apply -f https://projectcalico.docs.tigera.io/manifests/calico.yaml
-kubectl apply -f https://raw.githubusercontent.com/gasida/book-k8s-network/main/5/calico-v$2.yaml >/dev/null 2>&1
+kubectl apply -f https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/calico-v$2.yaml >/dev/null 2>&1
 
 echo "[TASK 4] Install calicoctl Tool - v$2"
 curl -L https://github.com/projectcalico/calico/releases/download/v$2/calicoctl-linux-amd64 -o calicoctl >/dev/null 2>&1
