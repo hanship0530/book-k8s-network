@@ -6,9 +6,10 @@ BOX_VERSION = "202502.21.0"
 N = 2
 
 # Version : Ex) k8s_V = '1.22.7'
-k8s_V = '1.23.6'
+K8SV = '1.33.1-1.1' # Kubernetes Version : apt list -a kubelet , ex) 1.32.5-1.1
+CONTAINERDV = '1.7.27-1' # Containerd Version : apt list -a containerd.io , ex) 1.6.33-1
 cni_N = 'Calico'
-calico_V = '3.22.2'
+calico_V = '3.30.2'
 
 Vagrant.configure("2") do |config|
 #-----Manager Node
@@ -17,19 +18,19 @@ Vagrant.configure("2") do |config|
       subconfig.vm.box_version = BOX_VERSION
       subconfig.vm.provider "virtualbox" do |v|
         v.customize ["modifyvm", :id, "--groups", "/#{cni_N}-Lab"]
-        v.customize ["modifyvm", :id, "--nicpromisc2", "allow-vms"]
+        v.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
         v.name = "#{cni_N}-k8s-m"
         v.memory = 2048
         v.cpus = 2 
         v.linked_clone = true
       end
-      subconfig.vm.hostname = "k8s-m"
+      subconfig.vm.hostname = "k8s-ctr"
       subconfig.vm.synced_folder "./", "/vagrant", disabled: true
       subconfig.vm.network "private_network", ip: "192.168.10.10"
       subconfig.vm.network "forwarded_port", guest: 22, host: 50010, auto_correct: true, id: "ssh"
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/init_cfg.sh", args: [ N, k8s_V ]
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/route1.sh"
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/master.sh", args: [ cni_N, calico_V ]
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/init_cfg.sh", args: [ K8SV, CONTAINERDV]
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/router-add1.sh"
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/k8s-ctr.sh", args: [ cni_N, calico_V ]
     end
 
 #-----Router Node
@@ -48,7 +49,7 @@ Vagrant.configure("2") do |config|
       subconfig.vm.network "private_network", ip: "192.168.10.254"
       subconfig.vm.network "private_network", ip: "192.168.20.254"
       subconfig.vm.network "forwarded_port", guest: 22, host: 50000, auto_correct: true, id: "ssh"
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/linux_router.sh", args: [ N, k8s_V, calico_V ]
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/router.sh", args: [ N, k8s_V, calico_V ]
     end
 
 #-----Worker Node Subnet2
@@ -66,9 +67,9 @@ Vagrant.configure("2") do |config|
       subconfig.vm.synced_folder "./", "/vagrant", disabled: true
       subconfig.vm.network "private_network", ip: "192.168.20.100"
       subconfig.vm.network "forwarded_port", guest: 22, host: 50020, auto_correct: true, id: "ssh"
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/init_cfg.sh", args: [ N, k8s_V ]
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/route2.sh"
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/worker.sh", args: [ calico_V ]
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/init_cfg.sh", args: [ K8SV, CONTAINERDV]
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/router-add2.sh"
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/k8s-w.sh", args: [ calico_V ]
     end
 
 #-----Worker Node Subnet1
@@ -78,7 +79,7 @@ Vagrant.configure("2") do |config|
       subconfig.vm.box_version = BOX_VERSION
       subconfig.vm.provider "virtualbox" do |v|
         v.customize ["modifyvm", :id, "--groups", "/#{cni_N}-Lab"]
-        v.customize ["modifyvm", :id, "--nicpromisc2", "allow-vms"]
+        v.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
         v.name = "#{cni_N}-k8s-w#{i}"
         v.memory = 1536
         v.cpus = 2
@@ -88,9 +89,9 @@ Vagrant.configure("2") do |config|
       subconfig.vm.synced_folder "./", "/vagrant", disabled: true
       subconfig.vm.network "private_network", ip: "192.168.10.10#{i}"
       subconfig.vm.network "forwarded_port", guest: 22, host: "5001#{i}", auto_correct: true, id: "ssh"
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/init_cfg.sh", args: [ N, k8s_V ]
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/route1.sh"
-      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/worker.sh", args: [ calico_V ]
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/init_cfg.sh", args: [ K8SV, CONTAINERDV]
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/router-add1.sh"
+      subconfig.vm.provision "shell", path: "https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/k8s-w.sh", args: [ calico_V ]
     end
   end
 

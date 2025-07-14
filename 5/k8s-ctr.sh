@@ -2,30 +2,29 @@
 
 echo ">>>> K8S Controlplane config Start <<<<"
 
-echo "[TASK 1] Initial Kubernetes - Pod CIDR 172.16.0.0/16 , Service CIDR 10.200.1.0/24 , API Server 192.168.10.10"
-kubeadm init --token 123456.1234567890123456 --token-ttl 0 --pod-network-cidr=172.16.0.0/16 --apiserver-advertise-address=192.168.10.10 --service-cidr 10.200.1.0/24 >/dev/null 2>&1
+echo "[TASK 1] Initial Kubernetes"
+kubeadm init --token 123456.1234567890123456 --token-ttl 0 --skip-phases=addon/kube-proxy --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.10.10 --cri-socket=unix:///run/containerd/containerd.sock >/dev/null 2>&1
 
 echo "[TASK 2] Setting kube config file"
-mkdir -p $HOME/.kube
-cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-chown $(id -u):$(id -g) $HOME/.kube/config
+mkdir -p /root/.kube
+cp -i /etc/kubernetes/admin.conf /root/.kube/config
+chown $(id -u):$(id -g) /root/.kube/config
 
 echo "[TASK 3] Install Calico CNI - v$2"
 #kubectl apply -f https://projectcalico.docs.tigera.io/manifests/calico.yaml
 kubectl apply -f https://raw.githubusercontent.com/hanship0530/book-k8s-network/main/5/calico-v$2.yaml >/dev/null 2>&1
 
 echo "[TASK 4] Install calicoctl Tool - v$2"
-curl -L https://github.com/projectcalico/calico/releases/download/v$2/calicoctl-linux-amd64 -o calicoctl >/dev/null 2>&1
+curl -L https://github.com/projectcalico/calico/releases/download/v$2/calicoctl-linux-arm64 -o calicoctl >/dev/null 2>&1
 chmod +x calicoctl && mv calicoctl /usr/bin
 
 echo "[TASK 5] Source the completion"
-# source bash-completion for kubectl kubeadm
-source <(kubectl completion bash)
-## Source the completion script in your ~/.bashrc file
 echo 'source <(kubectl completion bash)' >> /etc/profile
+echo 'source <(kubeadm completion bash)' >> /etc/profile
 
 echo "[TASK 6] Alias kubectl to k"
 echo 'alias k=kubectl' >> /etc/profile
+echo 'alias kc=kubecolor' >> /etc/profile
 echo 'complete -F __start_kubectl k' >> /etc/profile
 
 echo "[TASK 7] Install Kubectx & Kubens"
@@ -35,9 +34,9 @@ ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
 
 echo "[TASK 8] Install Kubeps & Setting PS1"
 git clone https://github.com/jonmosco/kube-ps1.git /root/kube-ps1 >/dev/null 2>&1
-cat <<"EOT" >> ~/.bash_profile
+cat <<"EOT" >> /root/.bash_profile
 source /root/kube-ps1/kube-ps1.sh
-KUBE_PS1_SYMBOL_ENABLE=false
+KUBE_PS1_SYMBOL_ENABLE=true
 function get_cluster_short() {
   echo "$1" | cut -d . -f1
 }
@@ -45,7 +44,7 @@ KUBE_PS1_CLUSTER_FUNCTION=get_cluster_short
 KUBE_PS1_SUFFIX=') '
 PS1='$(kube_ps1)'$PS1
 EOT
-kubectl config rename-context "kubernetes-admin@kubernetes" "$1-Lab" >/dev/null 2>&1
+kubectl config rename-context "kubernetes-admin@kubernetes" "HomeLab" >/dev/null 2>&1
 
 echo "[TASK 9] Install Packages"
 apt install kubetail etcd-client -y -qq >/dev/null 2>&1

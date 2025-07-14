@@ -8,17 +8,12 @@ chmod 600 /etc/netplan/01-netcfg.yaml
 chmod 600 /etc/netplan/50-vagrant.yaml
 
 
-cat <<EOT> /etc/netplan/50-vagrant.yaml
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    eth0:
-      addresses:
-      - $IP
+cat <<EOT>> /etc/netplan/50-vagrant.yaml
       routes:
       - to: 192.168.10.0/24
-        via: 192.168.20.254
+        via: 192.168.20.200
+      - to: 10.244.0.0/16
+        via: 192.168.20.200
 EOT
 
 netplan apply
