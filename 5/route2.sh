@@ -2,6 +2,12 @@
 
 IP=$(ip -br -4 addr | grep eth0 | awk '{print $3}')
 
+echo ">>>> Route Add Config Start <<<<"
+
+chmod 600 /etc/netplan/01-netcfg.yaml
+chmod 600 /etc/netplan/50-vagrant.yaml
+
+
 cat <<EOT> /etc/netplan/50-vagrant.yaml
 network:
   version: 2
@@ -15,5 +21,6 @@ network:
         via: 192.168.20.254
 EOT
 
-sudo chmod 400 /etc/netplan/50-vagrant.yaml
-sudo netplan apply
+netplan apply
+
+echo ">>>> Route Add Config End <<<<"
