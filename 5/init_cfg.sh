@@ -56,7 +56,7 @@ echo "[TASK 11] Install Kubernetes components (kubeadm, kubelet and kubectl) - v
 curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg >/dev/null 2>&1
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
 apt-get update >/dev/null 2>&1
-curl -LO "https://dl.k8s.io/release/$2" >/dev/null 2>&1
+curl -LO "https://dl.k8s.io/release/v$2/bin/linux/amd64/kubectl" >/dev/null 2>&1
 chmod +x kubectl
 mv kubelet /usr/local/bin/
 apt-get install -y kubelet=$2-00 kubeadm=$2-00 >/dev/null 2>&1
