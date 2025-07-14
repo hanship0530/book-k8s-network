@@ -23,7 +23,7 @@ systemctl stop apparmor && systemctl disable apparmor >/dev/null 2>&1
 
 echo "[TASK 5] Install Packages"
 apt update -qq >/dev/null 2>&1
-apt-get install apt-transport-https ca-certificates curl gnupg prettyping sshpass bridge-utils net-tools jq tree resolvconf wireguard ngrep ipset iputils-arping ipvsadm -y -qq >/dev/null 2>&1
+apt-get install apt-transport-https ca-certificates curl gnupg gpg prettyping sshpass bridge-utils net-tools jq tree resolvconf wireguard ngrep ipset iputils-arping ipvsadm -y -qq >/dev/null 2>&1
 # Install Batcat - https://github.com/sharkdp/bat
 apt-get install bat -y >/dev/null 2>&1
 echo "alias cat='batcat --paging=never'" >> /etc/profile
@@ -53,11 +53,13 @@ echo "[TASK 10] Disable and turn off SWAP"
 swapoff -a
 
 echo "[TASK 11] Install Kubernetes components (kubeadm, kubelet and kubectl) - v$2"
-curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg >/dev/null 2>&1
-echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
+1.24.17
+rm -f /etc/apt/sources.list.d/kubernetes.list
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.24/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg >/dev/null 2>&1
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.24/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
 apt-get update >/dev/null 2>&1
-#apt-get install -y kubelet=$2-00 kubectl=$2-00 kubeadm=$2-00 >/dev/null 2>&1
-apt-get install kubelet kubeadm kubectl >/dev/null 2>&1
+apt-get install -y kubelet=$2-00 kubectl=$2-00 kubeadm=$2-00 >/dev/null 2>&1
 apt-mark hold kubelet kubeadm kubectl >/dev/null 2>&1
 systemctl enable kubelet && systemctl start kubelet
 
