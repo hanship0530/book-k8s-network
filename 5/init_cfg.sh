@@ -53,7 +53,6 @@ echo "[TASK 10] Disable and turn off SWAP"
 swapoff -a
 
 echo "[TASK 11] Install Kubernetes components (kubeadm, kubelet and kubectl) - v$2"
-1.24.17
 rm -f /etc/apt/sources.list.d/kubernetes.list
 mkdir -p /etc/apt/keyrings
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.24/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg >/dev/null 2>&1
