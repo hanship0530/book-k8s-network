@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-IP=$(ip -br -4 addr | grep eth0 | awk '{print $3}')
+IP=$(ip -br -4 addr | grep enp0s8 | awk '{print $3}')
 
 cat <<EOT> /etc/netplan/50-vagrant.yaml
 network:
   version: 2
   renderer: networkd
   ethernets:
-    eth0:
+    enp0s8:
       addresses:
       - $IP
       routes:
