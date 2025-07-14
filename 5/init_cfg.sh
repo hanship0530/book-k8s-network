@@ -33,7 +33,7 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.
 echo 1 > /proc/sys/net/ipv4/ip_forward
 echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.d/k8s.conf
 
-# enable br_netfilter for iptables
+# enable br_netfilter for iptables 
 modprobe br_netfilter
 modprobe overlay
 echo "br_netfilter" >> /etc/modules-load.d/k8s.conf
@@ -52,13 +52,13 @@ apt-mark hold kubelet kubeadm kubectl >/dev/null 2>&1
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
-# avoid WARN&ERRO(default endpoints) when crictl run
+# avoid WARN&ERRO(default endpoints) when crictl run  
 cat <<EOF > /etc/crictl.yaml
 runtime-endpoint: unix:///run/containerd/containerd.sock
 image-endpoint: unix:///run/containerd/containerd.sock
 EOF
 
-# ready to install for k8s
+# ready to install for k8s 
 systemctl restart containerd && systemctl enable containerd
 systemctl enable --now kubelet
 

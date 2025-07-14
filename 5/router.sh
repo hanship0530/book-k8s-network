@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 echo ">>>> Initial Config Start <<<<"
+
 echo "[TASK 0] Setting eth2"
 chmod 600 /etc/netplan/01-netcfg.yaml
 chmod 600 /etc/netplan/50-vagrant.yaml
@@ -33,7 +34,11 @@ echo "[TASK 4] Setting Dummy Interface"
 modprobe dummy
 ip link add loop1 type dummy
 ip link set loop1 up
-ip addr add 172.20.20.20/32 dev loop1
+ip addr add 10.1.1.254/24 dev loop1
+
+ip link add loop2 type dummy
+ip link set loop2 up
+ip addr add 10.1.2.254/24 dev loop2
 
 echo "[TASK 5] Install Packages"
 export DEBIAN_FRONTEND=noninteractive
@@ -45,28 +50,19 @@ sed -i "s/^bgpd=no/bgpd=yes/g" /etc/frr/daemons
 
 NODEIP=$(ip -4 addr show eth1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
 cat << EOF >> /etc/frr/frr.conf
-frr version 8.1
-frr defaults traditional
-hostname localhost.localdomain
-log syslog informational
-no ipv6 forwarding
 !
-router bgp 64512
- no bgp ebgp-requires-policy
- neighbor k8s peer-group
- neighbor k8s remote-as 64512
- bgp listen range 192.168.0.0/16 peer-group k8s
- !
- address-family ipv4 unicast
-  network 10.1.1.0/24
-  network 10.1.2.0/24
-  neighbor k8s soft-reconfiguration inbound
+router bgp 65000
+  bgp router-id $NODEIP
+  bgp graceful-restart
+  no bgp ebgp-requires-policy
+  bgp bestpath as-path multipath-relax
   maximum-paths 4
-  maximum-paths ibgp 4
- exit-address-family
-!
-line vty
-!
+  neighbor CILIUM peer-group
+  neighbor CILIUM remote-as external
+  neighbor 192.168.10.100 peer-group CILIUM
+  neighbor 192.168.10.101 peer-group CILIUM
+  neighbor 192.168.20.100 peer-group CILIUM
+  network 172.20.20.20/32
 EOF
 
 systemctl daemon-reexec >/dev/null 2>&1
@@ -78,4 +74,3 @@ apt install apache2 -y >/dev/null 2>&1
 echo -e "<h1>Web Server : $(hostname)</h1>" > /var/www/html/index.html
 
 echo ">>>> Initial Config End <<<<"
-
