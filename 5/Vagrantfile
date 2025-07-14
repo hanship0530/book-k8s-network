@@ -11,8 +11,6 @@ cni_N = 'Calico'
 calico_V = '3.22.2'
 
 Vagrant.configure("2") do |config|
-    config.vm.boot_timeout = 600
-    config.ssh.forward_agent = false
 #-----Manager Node
     config.vm.define "k8s-m" do |subconfig|
       subconfig.vm.box = BOX_IMAGE
