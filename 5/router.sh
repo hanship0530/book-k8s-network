@@ -41,33 +41,66 @@ ip link set loop2 up
 ip addr add 10.1.2.254/24 dev loop2
 
 echo "[TASK 5] Install Packages"
-export DEBIAN_FRONTEND=noninteractive
 apt update -qq >/dev/null 2>&1
-apt-get install net-tools jq tree ngrep tcpdump frr termshark arping -y -qq >/dev/null 2>&1
+apt-get install sshpass net-tools jq tree resolvconf iptraf-ng iputils-arping ngrep quagga -y -qq >/dev/null 2>&1
 
-echo "[TASK 6] Configure FRR"
-sed -i "s/^bgpd=no/bgpd=yes/g" /etc/frr/daemons
+echo "[TASK 6] Change DNS Server IP Address"
+echo -e "nameserver 1.1.1.1" > /etc/resolvconf/resolv.conf.d/head
+resolvconf -u
 
-NODEIP=$(ip -4 addr show eth1 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-cat << EOF >> /etc/frr/frr.conf
+echo "[TASK 7] Setting Local DNS Using Hosts file"
+echo "192.168.10.10 k8s-ctr" >> /etc/hosts
+echo "192.168.20.100 k8s-w0" >> /etc/hosts
+for (( i=1; i<=$1; i++  )); do echo "192.168.10.10$i k8s-w$i" >> /etc/hosts; done
+
+echo "[TASK 8] Config Quagga Routing Software Suite"
+# quagga logging
+mkdir /var/log/quagga
+chown quagga:quagga /var/log/quagga
+
+# quagga config
+cat <<EOF > /etc/quagga/zebra.conf
+hostname zebra
+password zebra
+enable password zebra
 !
-router bgp 65000
-  bgp router-id $NODEIP
-  bgp graceful-restart
-  no bgp ebgp-requires-policy
-  bgp bestpath as-path multipath-relax
-  maximum-paths 4
-  neighbor CILIUM peer-group
-  neighbor CILIUM remote-as external
-  neighbor 192.168.10.100 peer-group CILIUM
-  neighbor 192.168.10.101 peer-group CILIUM
-  neighbor 192.168.20.100 peer-group CILIUM
-  network 172.20.20.20/32
+log file /var/log/quagga/zebra.log
+!
+line vty
+EOF
+systemctl enable zebra >/dev/null 2>&1 && systemctl start zebra
+
+cat <<EOF > /etc/quagga/bgpd.conf
+hostname zebra-bgpd
+password zebra
+enable password zebra
+!
+log file /var/log/quagga/bgpd.log
+!
+debug bgp events
+debug bgp filters
+debug bgp fsm
+debug bgp keepalives
+debug bgp updates
+!
+router bgp 64512
+bgp router-id 10.1.1.254
+bgp graceful-restart
+maximum-paths 4
+maximum-paths ibgp 4
+network 10.1.1.0/24
+network 10.1.2.0/24
+neighbor 192.168.10.10  remote-as 64512
+neighbor 192.168.20.100 remote-as 64512
+neighbor 192.168.10.101 remote-as 64512
+neighbor 192.168.10.102 remote-as 64512
+!
+line vty
 EOF
 
-systemctl daemon-reexec >/dev/null 2>&1
-systemctl restart frr >/dev/null 2>&1
-systemctl enable frr >/dev/null 2>&1
+chown quagga:quagga /etc/quagga/bgpd.conf
+chmod 640 /etc/quagga/bgpd.conf
+systemctl enable bgpd >/dev/null 2>&1 && systemctl start bgpd
 
 echo "[TASK 7] Install Apache"
 apt install apache2 -y >/dev/null 2>&1

@@ -45,11 +45,11 @@ kubectl config rename-context "kubernetes-admin@kubernetes" "HomeLab" >/dev/null
 
 
 echo "[TASK 7] Install Calico CNI"
-kubectl apply -f https://raw.githubusercontent.com/gasida/KANS/main/4/calico-kans.yaml >/dev/null 2>&1
+kubectl apply -f https://raw.githubusercontent.com/hanship0530/book-k8s-network/5/calico-v3.30.2.yaml >/dev/null 2>&1
 
 
 echo "[TASK 8] Install calicoctl Tool"
-curl -L https://github.com/projectcalico/calico/releases/download/v$3/calicoctl-linux-arm64 -o calicoctl >/dev/null 2>&1
+curl -L https://github.com/projectcalico/calico/releases/download/v3.30.2/calicoctl-linux-arm64 -o calicoctl >/dev/null 2>&1
 chmod +x calicoctl && mv calicoctl /usr/bin
 
 echo "[TASK 9] Remove node taint"
